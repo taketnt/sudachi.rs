@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#[cfg(feature = "dso-plugin")]
 use libloading::Error as LLError;
 use thiserror::Error;
 
@@ -40,6 +41,7 @@ pub enum PluginError {
     #[error("IO Error: {0}")]
     Io(#[from] std::io::Error),
 
+    #[cfg(feature = "dso-plugin")]
     #[error("Libloading Error: {message} ; {source}")]
     Libloading { source: LLError, message: String },
 
@@ -53,6 +55,7 @@ pub enum PluginError {
     InvalidDataFormatWithLine { line: usize, message: String },
 }
 
+#[cfg(feature = "dso-plugin")]
 impl From<LLError> for PluginError {
     fn from(e: LLError) -> Self {
         PluginError::Libloading {

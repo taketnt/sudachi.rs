@@ -15,6 +15,7 @@
  */
 
 pub mod binary_loader;
+#[cfg(feature = "dic-build")]
 pub mod build;
 pub mod category_type;
 pub mod character_category;

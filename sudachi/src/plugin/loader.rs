@@ -14,17 +14,20 @@
  *  limitations under the License.
  */
 
+#[cfg(feature = "dso-plugin")]
 use libloading::{Library, Symbol};
 use serde_json::Value;
 
 use crate::config::{Config, ConfigError};
 use crate::dic::grammar::Grammar;
 use crate::error::{SudachiError, SudachiResult};
+#[cfg(feature = "dso-plugin")]
 use crate::plugin::PluginError;
 
 /// Holds loaded plugins, whether they are bundled
 /// or loaded from DSOs
 pub struct PluginContainer<T: PluginCategory + ?Sized> {
+    #[cfg(feature = "dso-plugin")]
     libraries: Vec<Library>,
     plugins: Vec<<T as PluginCategory>::BoxType>,
 }
@@ -41,6 +44,7 @@ impl<T: PluginCategory + ?Sized> PluginContainer<T> {
 impl<T: PluginCategory + ?Sized> Drop for PluginContainer<T> {
     fn drop(&mut self) {
         self.plugins.clear();
+        #[cfg(feature = "dso-plugin")]
         self.libraries.clear();
     }
 }
@@ -48,25 +52,30 @@ impl<T: PluginCategory + ?Sized> Drop for PluginContainer<T> {
 struct PluginLoader<'a, 'b, T: PluginCategory + ?Sized> {
     cfg: &'a Config,
     grammar: &'a mut Grammar<'b>,
+    #[cfg(feature = "dso-plugin")]
     libraries: Vec<Library>,
     plugins: Vec<<T as PluginCategory>::BoxType>,
 }
 
+#[cfg(feature = "dso-plugin")]
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 fn make_system_specific_name(s: &str) -> Option<String> {
     Some(format!("lib{}.so", s))
 }
 
+#[cfg(feature = "dso-plugin")]
 #[cfg(target_os = "windows")]
 fn make_system_specific_name(s: &str) -> Option<String> {
     Some(format!("{}.dll", s))
 }
 
+#[cfg(feature = "dso-plugin")]
 #[cfg(target_os = "macos")]
 fn make_system_specific_name(s: &str) -> Option<String> {
     Some(format!("lib{}.dylib", s))
 }
 
+#[cfg(feature = "dso-plugin")]
 #[cfg(any(
     target_os = "ios",
     target_os = "tvos",
@@ -81,6 +90,7 @@ fn make_system_specific_name(_s: &str) -> Option<String> {
     None
 }
 
+#[cfg(feature = "dso-plugin")]
 fn system_specific_name(s: &str) -> Option<String> {
     if s.contains('.') {
         None
@@ -103,6 +113,7 @@ impl<'a, 'b, T: PluginCategory + ?Sized> PluginLoader<'a, 'b, T> {
         PluginLoader {
             cfg: config,
             grammar,
+            #[cfg(feature = "dso-plugin")]
             libraries: Vec::new(),
             plugins: Vec::new(),
         }
@@ -119,6 +130,7 @@ impl<'a, 'b, T: PluginCategory + ?Sized> PluginLoader<'a, 'b, T> {
 
     pub fn freeze(self) -> PluginContainer<T> {
         PluginContainer {
+            #[cfg(feature = "dso-plugin")]
             libraries: self.libraries,
             plugins: self.plugins,
         }
@@ -137,8 +149,7 @@ impl<'a, 'b, T: PluginCategory + ?Sized> PluginLoader<'a, 'b, T> {
                 }
             // Otherwise treat name as DSO
             } else {
-                let candidates = self.resolve_dso_names(name);
-                self.load_plugin_from_dso(&candidates)?
+                self.load_plugin_from_dso_name(name)?
             };
 
         <T as PluginCategory>::do_setup(&mut plugin, plugin_cfg, self.cfg, self.grammar)
@@ -147,6 +158,27 @@ impl<'a, 'b, T: PluginCategory + ?Sized> PluginLoader<'a, 'b, T> {
         Ok(())
     }
 
+    #[cfg(feature = "dso-plugin")]
+    fn load_plugin_from_dso_name(
+        &mut self,
+        name: &str,
+    ) -> SudachiResult<<T as PluginCategory>::BoxType> {
+        let candidates = self.resolve_dso_names(name);
+        self.load_plugin_from_dso(&candidates)
+    }
+
+    #[cfg(not(feature = "dso-plugin"))]
+    fn load_plugin_from_dso_name(
+        &mut self,
+        name: &str,
+    ) -> SudachiResult<<T as PluginCategory>::BoxType> {
+        Err(SudachiError::ConfigError(ConfigError::InvalidFormat(format!(
+            "Failed to load plugin {}: loading plugins from dynamic libraries is disabled (feature \"dso-plugin\")",
+            name
+        ))))
+    }
+
+    #[cfg(feature = "dso-plugin")]
     fn resolve_dso_names(&self, name: &str) -> Vec<String> {
         let mut resolved = self.cfg.resolve_paths(name.to_owned());
 
@@ -158,6 +190,7 @@ impl<'a, 'b, T: PluginCategory + ?Sized> PluginLoader<'a, 'b, T> {
         resolved
     }
 
+    #[cfg(feature = "dso-plugin")]
     fn try_load_library_from(candidates: &[String]) -> SudachiResult<(Library, &str)> {
         if candidates.is_empty() {
             return Err(SudachiError::PluginError(PluginError::InvalidDataFormat(
@@ -178,6 +211,7 @@ impl<'a, 'b, T: PluginCategory + ?Sized> PluginLoader<'a, 'b, T> {
         }))
     }
 
+    #[cfg(feature = "dso-plugin")]
     fn load_plugin_from_dso(
         &mut self,
         candidates: &[String],
