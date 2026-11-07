@@ -144,6 +144,7 @@ pub(crate) fn parse_user_data(input: &[u8], keep: bool) -> SudachiResult<(&[u8],
     }
 }
 
+#[cfg_attr(not(feature = "dic-build"), allow(dead_code))]
 pub(crate) fn write_u32_slice<W: Write>(w: &mut W, data: &[u32]) -> std::io::Result<usize> {
     let mut size = 0;
     for value in data {
@@ -153,6 +154,7 @@ pub(crate) fn write_u32_slice<W: Write>(w: &mut W, data: &[u32]) -> std::io::Res
     Ok(size)
 }
 
+#[cfg_attr(not(feature = "dic-build"), allow(dead_code))]
 pub(crate) fn write_i32_slice<W: Write>(w: &mut W, data: &[i32]) -> std::io::Result<usize> {
     let mut size = 0;
     for value in data {
@@ -162,6 +164,7 @@ pub(crate) fn write_i32_slice<W: Write>(w: &mut W, data: &[i32]) -> std::io::Res
     Ok(size)
 }
 
+#[cfg_attr(not(feature = "dic-build"), allow(dead_code))]
 pub(crate) fn write_utf16_string<W: Write>(w: &mut W, data: &str) -> std::io::Result<usize> {
     let utf16: Vec<u16> = data.encode_utf16().collect();
     let mut size = 0;
@@ -174,6 +177,7 @@ pub(crate) fn write_utf16_string<W: Write>(w: &mut W, data: &str) -> std::io::Re
     Ok(size)
 }
 
+#[cfg_attr(not(feature = "dic-build"), allow(dead_code))]
 impl<'a> WordInfoVariableData<'a> {
     pub fn write_to<W: Write>(
         &self,

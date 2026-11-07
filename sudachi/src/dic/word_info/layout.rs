@@ -55,6 +55,7 @@ pub fn size_from_lengths(
     Some(aligned_size(size))
 }
 
+#[cfg_attr(not(feature = "dic-build"), allow(dead_code))]
 pub(crate) fn size_from_variable_layout(layout: WordInfoVariableLayout) -> Option<usize> {
     size_from_lengths(
         layout.c_unit_split_length,
@@ -97,6 +98,7 @@ pub fn unaligned_size_from_lengths(
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg_attr(not(feature = "dic-build"), allow(dead_code))]
 pub(crate) struct WordInfoVariableLayout {
     pub c_unit_split_length: i8,
     pub b_unit_split_length: i8,
@@ -107,6 +109,7 @@ pub(crate) struct WordInfoVariableLayout {
     pub user_data_units: i16,
 }
 
+#[cfg_attr(not(feature = "dic-build"), allow(dead_code))]
 impl WordInfoVariableLayout {
     #[allow(clippy::too_many_arguments)]
     pub fn new(

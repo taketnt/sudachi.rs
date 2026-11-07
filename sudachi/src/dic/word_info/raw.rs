@@ -62,6 +62,7 @@ pub struct WordInfoFixedData {
     pub user_data_flag: i8,
 }
 
+#[cfg_attr(not(feature = "dic-build"), allow(dead_code))]
 pub(crate) struct WordInfoVariableData<'a> {
     pub c_unit_split: &'a [u32],
     pub b_unit_split: &'a [u32],
